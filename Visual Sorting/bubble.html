@@ -1,0 +1,281 @@
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style>
+    canvas {
+      border:1px solid #d3d3d3;
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+
+<body onload="insertArrayPrompt();" >
+
+  <nav>
+    <div class="nav-wrapper  blue darken-1" style="padding-right: 16px; padding-left: 16px;">
+      <a href="index.html" class="brand-logo"><i class="material-icons">school</i>Visual Sorting</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="exchange.html">Exchange Sort</a></li>
+        <li class="active"><a href="bubble.html">Bubble Sort</a></li>
+        <li><a href="comparison.html">Confronto</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container" style="text-align: center">
+  <div class="row">
+    <div id="column1" class="col s12">
+      <h1>Bubble Sort</h1>
+      <p >
+        Questo algoritmo adotta la seguente strategia:<br>
+        Si confrontano gli elementi a coppie <span style="color:orange">(arancione)</span>, ognuno con il suo successivo: se la coppia non è ordinata si effettua lo scambio <span style="color:green">(verde)</span> e si annota l'avvenuto scambio; se al termine dei confronti si è effettuato almeno uno scambio si riparte con il confronto di tutti gli elementi come descritto in precedenza, altrimenti il vettore è ordinato.<br>
+        Il bubble sort non è un algoritmo particolarmente efficiente, e risulta essere più lento dell'exchange sort.<br>
+        Si noti come utilizzando questo algoritmo, non si possa calcolare a priori il numero di confronti che esso effettuerà e nulla si puo' dire anche in merito al numero di scambi. Entrambi i valori dipenderanno dalla distribuzione iniziale degli elementi nel vettore.<br><br>
+        In media il numero di confronti è:  <b>(n+1)*(n-1)/2</b><br>
+        In media il numero di scambi è:  <b>n*(n-1)/4</b><br>
+        La complessità per n -> inf è quindi nell'ordine di <b>n^2</b>
+      </p>
+      <h4>Velocità:</h3>
+      <a class="waves-effect waves-light btn" onclick="setSpeed(2)">Lento</a>
+      <a class="waves-effect waves-light btn" onclick="setSpeed(1)">Normale</a>
+      <a class="waves-effect waves-light btn" onclick="setSpeed(0.3)">Veloce</a>
+    </div>
+  </div>
+  <div class="row">
+    <div  class="col s12">
+      <canvas id="canvas2"></canvas><br>
+      <a id="startButton" class="waves-effect waves-light btn" onclick="start()">Avvia</a>
+      <p>Numero confronti: <span id="confronti2">0</span></p>
+      <p>Numero scambi: <span id="scambi2">0</span></p>
+    </div>
+  </div>
+</div>
+
+
+<footer class="page-footer blue darken-1" style="padding: 0px!important">
+  <div class="footer-copyright">
+    <div class="container">
+      © 2020 Copyright Roberto D'Agnelli
+      <a class="grey-text text-lighten-4 right" href="https://www.robertodagnelli.altervista.org">Pagina web sviluppatore</a>
+    </div>
+  </div>
+</footer>
+
+<!--JavaScript at end of body for optimized loading-->
+<script type="text/javascript" src="js/materialize.min.js"></script>
+<script>
+
+  var speed = 1;
+
+  var numConfrontiExchange=0;
+  var numScambiExchange=0; 
+
+  var numConfrontiBubble=0;
+  var numScambiBubble=0; 
+
+  var items = new Array();
+  var items2 = new Array();
+  var canvasHeight = 300;
+  var canvasWidth = document.getElementById("column1").offsetWidth;
+
+
+  var myCanvas2 = {
+    canvas : document.getElementById("canvas2"),
+    start : function() {
+      this.canvas.width = canvasWidth;
+      this.canvas.height = canvasHeight;
+      this.context = this.canvas.getContext("2d");
+      this.interval = setInterval(function(){updateCanvas(myCanvas2,items2);}, 5);
+    },
+    clear : function() {
+      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+  }
+
+
+ function start() {
+    document.getElementById("startButton").classList.add("disabled");
+    bubbleSort(items2);
+  }
+
+  function insertArrayPrompt() {
+    var list = prompt("Inserisci una lista di cifre da ordinare, separate da una virgola", "3,1,5,6,2,4");
+    var digits = list.split(",");
+    for(var i=0; i<digits.length; i++){
+      var digit = parseInt(digits[i]);
+      if(!Number.isInteger(digit) || digit < 0 || digit > 9){
+        alert("La lista di numeri inserita è errata. Assicurati di aver inserito soltanto cifre separate da una virgola");
+        items = new Array(); // resetta l'array
+        items2 = new Array(); // resetta l'array
+        return;
+      }else{
+        var maxItemWidth = 50;
+        var space = 8;
+        var itemWidth = (canvasWidth/digits.length)-space;
+        if(itemWidth > maxItemWidth){
+            itemWidth = maxItemWidth;
+        }
+        items2[i] = new component(itemWidth, digit*30, "blue", (i*(itemWidth+space)), canvasHeight-(digit*30), digit, myCanvas2);
+      }
+    }
+    myCanvas2.start();
+  }
+
+  function component(width, height, color, x, y, label, canvas) {
+    this.width = width;
+    this.height = height;
+    this.color = color;
+    this.label = label;
+    this.canvas = canvas;
+    this.speedX = 0;
+    this.speedY = 0;
+    this.targetX = x;
+    this.x = x;
+    this.y = y;    
+    this.update = function() {
+      ctx = this.canvas.context;
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+      ctx.font = "20px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(label, this.x + width/2, this.y - 5);
+      moveToX(this, this.targetX);
+    }
+    this.newPos = function() {
+      this.x += this.speedX;
+      this.y += this.speedY;        
+    }
+    this.changeColor = function(color){
+      this.color = color;
+    }
+  }
+
+  function updateCanvas(canvas, items) {
+    canvas.clear();
+    for(var i=0; i<items.length; i++){
+      items[i].newPos();    
+      items[i].update();
+    }
+  }
+
+
+
+  function moveup(item) {
+    item.speedY -= 1; 
+  }
+
+  function movedown(item) {
+    item.speedY += 1; 
+  }
+
+  function moveleft(item) {
+    item.speedX -= 1; 
+  }
+
+  function moveright(item) {
+    item.speedX += 1; 
+  }
+
+  function moveToX(item, x){
+  	var distance = Math.abs(x-item.x);
+  	var speed = distance/10;
+    if(item.x > x){
+      item.speedX = -speed;
+    }else if(item.x < x){
+      item.speedX = speed;
+    }else{
+      item.speedX = 0;
+    }
+  }
+
+
+  async function exchangeSort(items){
+    console.log("exchangeSort called");
+    for (var i=0; i<items.length-1; i++){
+      console.log("exchangeSort for1 i:" + i);
+      items[i].changeColor("orange");
+      for (var j=i+1; j<items.length; j++){
+       numConfrontiExchange++;
+       document.getElementById("confronti").innerHTML = numConfrontiExchange;
+       items[j].changeColor("red");
+       console.log("exchangeSort for2 i:" + j);
+       await sleep(2000*speed);
+       if(items[i].label>items[j].label){
+         numScambiExchange++;
+         document.getElementById("scambi").innerHTML = numScambiExchange;
+
+         animSwap(items[i], items[j]);
+         items[i].changeColor("green");
+         items[j].changeColor("green");
+         await sleep(2000*speed);
+         items[j].changeColor("orange");
+         var temp = items[i];
+         items[i] = items[j];
+         items[j] = temp;
+       }     
+       items[j].changeColor("blue");      
+     }
+     items[i].changeColor("blue"); 
+   }
+   return items;
+ }
+
+ async function bubbleSort(items){
+ 	console.log("bubbleSort called");
+ 	var scambio;
+ 	var temp;
+ 	do{
+ 		scambio=false;
+ 		for(var i=0; i<items.length-1; i++){
+ 			numConfrontiBubble++;
+ 			document.getElementById("confronti2").innerHTML = numConfrontiBubble;
+			items[i].changeColor("orange");
+			items[i+1].changeColor("orange");
+ 			await sleep(2000*speed);
+ 			if(items[i].label > items[i+1].label){
+ 				numScambiBubble++;
+		        document.getElementById("scambi2").innerHTML = numScambiBubble;
+		        animSwap(items[i], items[i+1]);
+		        items[i].changeColor("green");
+				items[i+1].changeColor("green");
+		        await sleep(2000*speed);
+ 				temp = items[i];
+ 				items[i] = items[i+1];
+ 				items[i+1] = temp;
+ 				scambio=true;
+ 			}
+
+ 		items[i].changeColor("blue");
+ 		items[i+1].changeColor("blue");
+ 		}
+ 	}while(scambio)
+ }
+ function animSwap(a,b){
+  console.log("swap called");
+  var aX = a.x;
+  var bX = b.x;
+
+  a.targetX = bX;
+  b.targetX = aX;
+}
+
+function setSpeed(newSpeed){
+  speed = newSpeed;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+</script>
+</body>
+
+
+</html>
